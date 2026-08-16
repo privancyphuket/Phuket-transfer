@@ -525,13 +525,16 @@
             <div class="cnum" style="font-size:1rem;margin-top:20px;">You'll enter your card on Stripe's secure page</div>
             <div class="crow"><span>256-bit encryption</span><span>Visa · Mastercard · JCB</span></div>
           </div>
+          <div style="font-size:.8rem;color:var(--ink-soft);background:var(--sand-light);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+            On Stripe's page, please re-select <b><span id="reminderVeh">your vehicle</span> · <span id="reminderTrip">trip type</span></b> from the dropdown to match the price shown here.
+          </div>
           <button class="btn btn-dark btn-block" id="payBtn" type="button">Pay &amp; confirm booking →</button>
-          <div class="pay-status" id="payStatus"><span class="spinner"></span><span>Opening secure Stripe Checkout…</span></div>
+          <div class="pay-status" id="payStatus"><span class="spinner"></span><span>Opening secure Stripe payment page…</span></div>
           <div class="lock">🔒 We never see or store your card number — Stripe handles payment directly</div>
           <div class="secure-badges">
             <span>🔒 PCI‑DSS compliant</span><span>Powered by Stripe</span><span>Refund-friendly</span>
           </div>
-          <!-- CONFIG: set STRIPE_PUBLISHABLE_KEY and CHECKOUT_ENDPOINT in the script below once your backend is deployed -->
+          <!-- CONFIG: paste your 7 Stripe Payment Link URLs into PAYMENT_LINKS in the script below -->
         </div>
 
         <div id="payWA" style="display:none;">
@@ -661,15 +664,23 @@
 
 <a class="wa-float" href="https://wa.me/66959525010?text=Hello%2C%20I%27d%20like%20to%20book%20a%20transfer." target="_blank" aria-label="WhatsApp us">💬</a>
 
-<script src="https://js.stripe.com/v3/"></script>
 <script>
-  // ===================== STRIPE CONFIG =====================
-  // 1. Paste your Stripe PUBLISHABLE key (starts with pk_test_ or pk_live_)
-  const STRIPE_PUBLISHABLE_KEY = "pk_test_REPLACE_ME";
-  // 2. Paste the URL of your deployed "create checkout session" backend function
-  //    (see the deployment guide provided alongside this file)
-  const CHECKOUT_ENDPOINT = "https://inspiring-zabaione-64fcb7.netlify.app/.netlify/functions/create-checkout-session";
-  // ===========================================================
+  // ===================== STRIPE PAYMENT LINKS =====================
+  // No backend needed. Create ONE Stripe Payment Link per route (7 total)
+  // from your Stripe Dashboard → Payment Links. Inside each link, add the
+  // product's 4 vehicle prices × 2 trip types (8 prices) and turn on
+  // "Let customers choose the price" so they pick the right one at checkout.
+  // Paste each link's URL below, matching the route names exactly.
+  const PAYMENT_LINKS = {
+    "Phuket Town":   "https://buy.stripe.com/REPLACE_phuket-town",
+    "Patong":        "https://buy.stripe.com/REPLACE_patong",
+    "Kata / Karon":  "https://buy.stripe.com/REPLACE_kata-karon",
+    "Phang Nga":     "https://buy.stripe.com/REPLACE_phang-nga",
+    "Khao Lak":      "https://buy.stripe.com/REPLACE_khao-lak",
+    "Samet Nangshe": "https://buy.stripe.com/REPLACE_samet-nangshe",
+    "Krabi":         "https://buy.stripe.com/REPLACE_krabi",
+  };
+  // ===================================================================
 </script>
 <script>
   const RATES = {
@@ -735,6 +746,11 @@
 
     heroDestLabel.innerHTML = (state.route || "Select route") + " <small>drop-off</small>";
 
+    const reminderVeh = document.getElementById('reminderVeh');
+    const reminderTrip = document.getElementById('reminderTrip');
+    if(reminderVeh) reminderVeh.textContent = state.vehicle || 'your vehicle';
+    if(reminderTrip) reminderTrip.textContent = state.trip === 'round' ? 'Round trip' : 'One way';
+
     if(state.route && state.vehicle){
       const price = priceFor(state.route, state.vehicle, state.trip);
       totalAmt.textContent = fmt(price);
@@ -776,69 +792,28 @@
     });
   });
 
-  // Stripe Checkout handoff
-  document.getElementById('payBtn').addEventListener('click', async () => {
+  // Stripe Payment Link handoff — no backend, no fetch, no CORS
+  document.getElementById('payBtn').addEventListener('click', () => {
     if(!state.route || !state.vehicle){
       alert('Please select a destination and vehicle first.');
       return;
     }
     const name = document.getElementById('name').value.trim();
     const phone = document.getElementById('phone').value.trim();
-    const email = document.getElementById('email').value.trim();
     if(!name || !phone){
       alert('Please fill in your name and phone/WhatsApp number.');
       return;
     }
-    if(STRIPE_PUBLISHABLE_KEY.includes('pk_live_51U3CALLl8QsfecOjCbag1aZwgD7XSdAWJqrP2pyyzmPOZLL0mjUIslA0EQ9EvRdsX2DXlXyHQ90ot9X2ehhbkT4n00ngLfIg7m')){
-      alert('Payment isn\'t connected yet: STRIPE_PUBLISHABLE_KEY is still a placeholder. Paste your real Stripe publishable key near the bottom of this file (see the CONFIG comment).');
+    const link = PAYMENT_LINKS[state.route];
+    if(!link || link.includes('REPLACE_')){
+      alert('Payment isn\'t connected yet for this route: paste your real Stripe Payment Link into PAYMENT_LINKS near the bottom of this file.');
       return;
     }
-
-    const amount = priceFor(state.route, state.vehicle, state.trip);
     const statusEl = document.getElementById('payStatus');
-    const btn = document.getElementById('payBtn');
     statusEl.classList.add('show');
-    btn.disabled = true;
-    btn.textContent = 'Preparing checkout…';
-
-    const bookingPayload = {
-      route: state.route,
-      vehicle: state.vehicle,
-      trip: state.trip,
-      amount_thb: amount, // integer THB, e.g. 1200
-      passengers: document.getElementById('passengers').value,
-      flight: document.getElementById('flight').value,
-      date: document.getElementById('date').value,
-      time: document.getElementById('time').value,
-      pickup: document.getElementById('pickup').value,
-      dropoff: document.getElementById('dropoff').value,
-      notes: document.getElementById('notes').value,
-      name, phone, email
-    };
-
-    try {
-      const res = await fetch(CHECKOUT_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bookingPayload)
-      });
-      if(!res.ok) throw new Error('Backend returned an error');
-      const data = await res.json();
-      const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-      if(data.url){
-        window.location.href = data.url; // Checkout Session URL (recommended)
-      } else if(data.id){
-        await stripe.redirectToCheckout({ sessionId: data.id });
-      } else {
-        throw new Error('No checkout session returned');
-      }
-    } catch (err){
-      console.error(err);
-      statusEl.classList.remove('show');
-      btn.disabled = false;
-      btn.textContent = 'Pay & confirm booking →';
-      alert('Could not start checkout. Please try again, or book via WhatsApp instead.');
-    }
+    // Send them to Stripe's hosted payment page. They'll pick the matching
+    // vehicle + trip-type price there (shown on this page as a reminder).
+    window.location.href = link;
   });
 
   function updateWaLink(){
