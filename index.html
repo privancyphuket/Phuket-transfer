@@ -668,7 +668,7 @@
   const STRIPE_PUBLISHABLE_KEY = "pk_test_REPLACE_ME";
   // 2. Paste the URL of your deployed "create checkout session" backend function
   //    (see the deployment guide provided alongside this file)
-  const CHECKOUT_ENDPOINT = "https://YOUR-BACKEND-URL/create-checkout-session";
+  const CHECKOUT_ENDPOINT = "https://inspiring-zabaione-64fcb7.netlify.app/.netlify/functions/create-checkout-session";
   // ===========================================================
 </script>
 <script>
@@ -789,8 +789,8 @@
       alert('Please fill in your name and phone/WhatsApp number.');
       return;
     }
-    if(STRIPE_PUBLISHABLE_KEY.includes('REPLACE_ME') || CHECKOUT_ENDPOINT.includes('YOUR-BACKEND-URL')){
-      alert('Payment isn\'t connected yet: this page still has placeholder Stripe values. Follow the backend deployment guide, then fill in STRIPE_PUBLISHABLE_KEY and CHECKOUT_ENDPOINT near the bottom of this file.');
+    if(STRIPE_PUBLISHABLE_KEY.includes('REPLACE_ME')){
+      alert('Payment isn\'t connected yet: STRIPE_PUBLISHABLE_KEY is still a placeholder. Paste your real Stripe publishable key near the bottom of this file (see the CONFIG comment).');
       return;
     }
 
