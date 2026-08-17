@@ -526,7 +526,7 @@
             <div class="crow"><span>256-bit encryption</span><span>Visa · Mastercard · JCB</span></div>
           </div>
           <div style="font-size:.8rem;color:var(--ink-soft);background:var(--sand-light);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
-            On Stripe's page, please re-select <b><span id="reminderVeh">your vehicle</span> · <span id="reminderTrip">trip type</span></b> from the dropdown to match the price shown here.
+            You'll be sent straight to Stripe's secure payment page for <b><span id="reminderVeh">your vehicle</span> · <span id="reminderTrip">trip type</span></b> — already matched to your selection.
           </div>
           <button class="btn btn-dark btn-block" id="payBtn" type="button">Pay &amp; confirm booking →</button>
           <div class="pay-status" id="payStatus"><span class="spinner"></span><span>Opening secure Stripe payment page…</span></div>
@@ -534,7 +534,7 @@
           <div class="secure-badges">
             <span>🔒 PCI‑DSS compliant</span><span>Powered by Stripe</span><span>Refund-friendly</span>
           </div>
-          <!-- CONFIG: paste your 7 Stripe Payment Link URLs into PAYMENT_LINKS in the script below -->
+          <!-- CONFIG: paste your 56 Stripe Payment Link URLs into PAYMENT_LINKS in the script below (route → vehicle → one/round) -->
         </div>
 
         <div id="payWA" style="display:none;">
@@ -667,18 +667,54 @@
 <script>
   // ===================== STRIPE PAYMENT LINKS =====================
   // No backend needed. Create ONE Stripe Payment Link per route (7 total)
-  // from your Stripe Dashboard → Payment Links. Inside each link, add the
-  // product's 4 vehicle prices × 2 trip types (8 prices) and turn on
-  // "Let customers choose the price" so they pick the right one at checkout.
-  // Paste each link's URL below, matching the route names exactly.
+  // from your Stripe Dashboard → Payment Links. Create ONE Payment Link per
+  // exact price (route + vehicle + trip type = 56 links total). This lets
+  // the "Pay" button send the customer straight to the exact right price —
+  // no re-selecting anything on Stripe's page. Paste each URL below,
+  // matching route/vehicle names exactly as used in RATES further down.
   const PAYMENT_LINKS = {
-    "Phuket Town":   "https://buy.stripe.com/",
-    "Patong":        "https://buy.stripe.com/REPLACE_patong",
-    "Kata / Karon":  "https://buy.stripe.com/REPLACE_kata-karon",
-    "Phang Nga":     "https://buy.stripe.com/REPLACE_phang-nga",
-    "Khao Lak":      "https://buy.stripe.com/REPLACE_khao-lak",
-    "Samet Nangshe": "https://buy.stripe.com/REPLACE_samet-nangshe",
-    "Krabi":         "https://buy.stripe.com/REPLACE_krabi",
+    "Phuket Town": {
+      "Sedan":    { one: "https://buy.stripe.com/REPLACE_phukettown_sedan_one",    round: "https://buy.stripe.com/REPLACE_phukettown_sedan_round" },
+      "SUV":      { one: "https://buy.stripe.com/REPLACE_phukettown_suv_one",      round: "https://buy.stripe.com/REPLACE_phukettown_suv_round" },
+      "Van":      { one: "https://buy.stripe.com/REPLACE_phukettown_van_one",      round: "https://buy.stripe.com/REPLACE_phukettown_van_round" },
+      "VIP Van":  { one: "https://buy.stripe.com/REPLACE_phukettown_vipvan_one",   round: "https://buy.stripe.com/REPLACE_phukettown_vipvan_round" },
+    },
+    "Patong": {
+      "Sedan":    { one: "https://buy.stripe.com/REPLACE_patong_sedan_one",    round: "https://buy.stripe.com/REPLACE_patong_sedan_round" },
+      "SUV":      { one: "https://buy.stripe.com/REPLACE_patong_suv_one",      round: "https://buy.stripe.com/REPLACE_patong_suv_round" },
+      "Van":      { one: "https://buy.stripe.com/REPLACE_patong_van_one",      round: "https://buy.stripe.com/REPLACE_patong_van_round" },
+      "VIP Van":  { one: "https://buy.stripe.com/REPLACE_patong_vipvan_one",   round: "https://buy.stripe.com/REPLACE_patong_vipvan_round" },
+    },
+    "Kata / Karon": {
+      "Sedan":    { one: "https://buy.stripe.com/REPLACE_katakaron_sedan_one",    round: "https://buy.stripe.com/REPLACE_katakaron_sedan_round" },
+      "SUV":      { one: "https://buy.stripe.com/REPLACE_katakaron_suv_one",      round: "https://buy.stripe.com/REPLACE_katakaron_suv_round" },
+      "Van":      { one: "https://buy.stripe.com/REPLACE_katakaron_van_one",      round: "https://buy.stripe.com/REPLACE_katakaron_van_round" },
+      "VIP Van":  { one: "https://buy.stripe.com/REPLACE_katakaron_vipvan_one",   round: "https://buy.stripe.com/REPLACE_katakaron_vipvan_round" },
+    },
+    "Phang Nga": {
+      "Sedan":    { one: "https://buy.stripe.com/REPLACE_phangnga_sedan_one",    round: "https://buy.stripe.com/REPLACE_phangnga_sedan_round" },
+      "SUV":      { one: "https://buy.stripe.com/REPLACE_phangnga_suv_one",      round: "https://buy.stripe.com/REPLACE_phangnga_suv_round" },
+      "Van":      { one: "https://buy.stripe.com/REPLACE_phangnga_van_one",      round: "https://buy.stripe.com/REPLACE_phangnga_van_round" },
+      "VIP Van":  { one: "https://buy.stripe.com/REPLACE_phangnga_vipvan_one",   round: "https://buy.stripe.com/REPLACE_phangnga_vipvan_round" },
+    },
+    "Khao Lak": {
+      "Sedan":    { one: "https://buy.stripe.com/REPLACE_khaolak_sedan_one",    round: "https://buy.stripe.com/REPLACE_khaolak_sedan_round" },
+      "SUV":      { one: "https://buy.stripe.com/REPLACE_khaolak_suv_one",      round: "https://buy.stripe.com/REPLACE_khaolak_suv_round" },
+      "Van":      { one: "https://buy.stripe.com/REPLACE_khaolak_van_one",      round: "https://buy.stripe.com/REPLACE_khaolak_van_round" },
+      "VIP Van":  { one: "https://buy.stripe.com/REPLACE_khaolak_vipvan_one",   round: "https://buy.stripe.com/REPLACE_khaolak_vipvan_round" },
+    },
+    "Samet Nangshe": {
+      "Sedan":    { one: "https://buy.stripe.com/REPLACE_sametnangshe_sedan_one",    round: "https://buy.stripe.com/REPLACE_sametnangshe_sedan_round" },
+      "SUV":      { one: "https://buy.stripe.com/REPLACE_sametnangshe_suv_one",      round: "https://buy.stripe.com/REPLACE_sametnangshe_suv_round" },
+      "Van":      { one: "https://buy.stripe.com/REPLACE_sametnangshe_van_one",      round: "https://buy.stripe.com/REPLACE_sametnangshe_van_round" },
+      "VIP Van":  { one: "https://buy.stripe.com/REPLACE_sametnangshe_vipvan_one",   round: "https://buy.stripe.com/REPLACE_sametnangshe_vipvan_round" },
+    },
+    "Krabi": {
+      "Sedan":    { one: "https://buy.stripe.com/REPLACE_krabi_sedan_one",    round: "https://buy.stripe.com/REPLACE_krabi_sedan_round" },
+      "SUV":      { one: "https://buy.stripe.com/REPLACE_krabi_suv_one",      round: "https://buy.stripe.com/REPLACE_krabi_suv_round" },
+      "Van":      { one: "https://buy.stripe.com/REPLACE_krabi_van_one",      round: "https://buy.stripe.com/REPLACE_krabi_van_round" },
+      "VIP Van":  { one: "https://buy.stripe.com/REPLACE_krabi_vipvan_one",   round: "https://buy.stripe.com/REPLACE_krabi_vipvan_round" },
+    },
   };
   // ===================================================================
 </script>
@@ -804,14 +840,15 @@
       alert('Please fill in your name and phone/WhatsApp number.');
       return;
     }
-    const link = PAYMENT_LINKS[state.route];
+    const tripKey = state.trip === 'round' ? 'round' : 'one';
+    const link = PAYMENT_LINKS[state.route] && PAYMENT_LINKS[state.route][state.vehicle] && PAYMENT_LINKS[state.route][state.vehicle][tripKey];
     if(!link || link.includes('REPLACE_')){
-      alert('Payment isn\'t connected yet for this route: paste your real Stripe Payment Link into PAYMENT_LINKS near the bottom of this file.');
+      alert('Payment isn\'t connected yet for this exact route/vehicle/trip: paste your real Stripe Payment Link into PAYMENT_LINKS near the bottom of this file.');
       return;
     }
     const statusEl = document.getElementById('payStatus');
     statusEl.classList.add('show');
-    // Send them to Stripe's hosted payment page. They'll pick the matching
+    // Send them straight to the exact matching Stripe payment page —
     // vehicle + trip-type price there (shown on this page as a reminder).
     window.location.href = link;
   });
